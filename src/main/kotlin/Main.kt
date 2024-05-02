@@ -1,48 +1,56 @@
-import Deck.Companion.Suits
-import Deck.Companion.ranks
-
 fun main() {
-    println(ranks.joinToString(" "))
-    println(Suits.entries.map { it.stringCode.toChar() }.joinToString(" "))
+    println("Indigo Card Game")
+    val game = IndigoGame(playFirst = userChoiceFirstPlay())
 
-    val deck = Deck(Deck.generateFullDeck())
-    deck.shuffle()
-    println(deck.deck.joinToString(" "))
-}
+    game.initTable()
+    println("Initial cards on the table: ${game.table.joinToString(" ")}")
+    game.dealCards()
 
-
-class Deck(var deck: List<Card>) {
-    fun shuffle() {
-        deck = deck.shuffled()
-    }
-
-    companion object {
-        val ranks = List(13) {
-            when(it) {
-                1 -> "A"
-                11 -> "J"
-                12 -> "Q"
-                13 -> "K"
-                else -> "$it"
+    while (!game.isGameOver) {
+        game.printStateTable()
+        if (game.currentPlayer == PC_TURN) {
+            println("Computer plays ${game.pcHand.last()}")
+            game.playCard(PC_TURN, game.pcHand.lastIndex)
+        } else {
+            game.printPlayerHand()
+            val userIndex = userIndexInput(game.playerHand.size)
+            if (userIndex > 0) {
+                game.playCard(PLAYER_TURN, userIndex - 1)
+            } else if (userIndex == 0) {
+                game.endGame()
             }
         }
-        enum class Suits(val stringCode: Int) {
-            DIAMOND(0x2666),
-            HEART(0x2665),
-            SPADE(0x2660),
-            CLUB(0x2663)
-        }
+        game.dealCards()
+    }
+    println("Game Over")
+}
 
-        fun generateFullDeck(): List<Card> {
-            val deck = Suits.entries.map { suit ->
-                ranks.map { Card(it, suit) }
-            }.reduce { acc, cards -> acc + cards }
-            return deck
+private fun userChoiceFirstPlay(): Boolean {
+    while (true) {
+        println("Play first?")
+        val userInput = readln().trim()
+        if (userInput.equals("yes", true)) {
+            return true
+        } else if (userInput.equals("no", true)) {
+            return false
         }
     }
-    data class Card(val rank: String, val suit: Suits) {
-        override fun toString(): String {
-            return "$rank${suit.stringCode.toChar()}"
+}
+
+private fun userIndexInput(lastIndex: Int): Int {
+    while (true) {
+        println("Choose a card to play (1-$lastIndex):")
+        val userInput = readln().trim()
+        if (userInput.equals("exit", true)) {
+            return 0
+        } else {
+            try {
+                val index = userInput.toInt()
+                if (index in (1..lastIndex)) {
+                    return index
+                }
+            } catch (_: NumberFormatException) {
+            }
         }
     }
 }

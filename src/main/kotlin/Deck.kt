@@ -1,4 +1,4 @@
-private val ranks = List(13) {
+val ranks = List(13) {
     when (it) {
         0 -> "A"
         10 -> "J"
@@ -66,3 +66,14 @@ data class Card(val rank: String, val suit: Suits) {
 
     fun isWinnerCard(card: Card): Boolean = rank == card.rank || suit == card.suit
 }
+
+
+fun List<Card>.getSameSuitCards(): List<Card> =
+    Suits.values().map { suit ->
+        this.filter { it.suit == suit }
+    }.maxByOrNull { it.size } ?: emptyList()
+
+fun List<Card>.getSameRankCards(): List<Card> =
+    ranks.map { rank ->
+        this.filter { it.rank == rank }
+    }.maxByOrNull { it.size } ?: emptyList()

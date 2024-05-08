@@ -4,10 +4,10 @@ open class Player(
     var score: Int = 0,
     var cardsWon: List<Card> = listOf()
 ) {
-    open fun playCard(): Card? {
+    open fun findCardToPlay(cardTable: Card?): Card? {
         return when (this) {
-            is AIPlayer -> this.playCard()
-            else -> (this as HMPlayer).playCard()
+            is AIPlayer -> this.findCardToPlay(cardTable)
+            else -> (this as HMPlayer).findCardToPlay()
         }
     }
 
@@ -23,19 +23,53 @@ open class Player(
 }
 
 class AIPlayer(name: String = "Computer") : Player(name) {
-    override fun playCard(): Card = cards.last().also {
-        println("Computer plays $it")
-        cards -= it
+    override fun findCardToPlay(cardTable: Card?): Card =
+        processCardsToPlay(cardTable).also {
+            println(cards.joinToString(" "))
+            println("Computer plays $it")
+            cards -= it
+        }
+
+    private fun processCardsToPlay(card: Card? = null): Card {
+        var sameSuitCards = cards.getSameSuitCards()
+        var sameRankCards = cards.getSameRankCards()
+        when {
+            cards.size == 1 -> return cards.first()
+            card == null -> return bestCard(cards, sameSuitCards, sameRankCards)
+            else -> {
+                val candidateCards = getCandidateCards(card)
+                when {
+                    candidateCards.isEmpty() -> return bestCard(cards, sameSuitCards, sameRankCards)
+                    candidateCards.size == 1 -> return candidateCards.first()
+                    else -> {
+                        sameSuitCards = candidateCards.getSameSuitCards()
+                        sameRankCards = candidateCards.getSameRankCards()
+                        return bestCard(candidateCards, sameSuitCards, sameRankCards)
+                    }
+                }
+            }
+        }
     }
+
+    private fun bestCard(baseCards: List<Card>, sameSuitCards: List<Card>, sameRankCards: List<Card>): Card {
+        if (sameSuitCards.isEmpty() && sameRankCards.isEmpty()) {
+            return baseCards.random()
+        }
+        if (sameSuitCards.size >= sameRankCards.size)
+            return sameSuitCards.minBy { it.scoreValue }
+        return sameRankCards.random()
+    }
+
+    private fun getCandidateCards(card: Card): List<Card> = cards.filter { it.isWinnerCard(card) }
 }
 
 class HMPlayer(name: String = "Player") : Player(name) {
 
-    override fun playCard(): Card? {
+    fun findCardToPlay(): Card? {
         val indexInput = userIndexInput(cards.size)
         return if (indexInput == 0)
             null
-        else cards[indexInput-1].also { cards -= cards[indexInput-1] }
+        else cards[indexInput - 1].also { cards -= cards[indexInput - 1] }
     }
 
     private fun userIndexInput(lastIndex: Int): Int {

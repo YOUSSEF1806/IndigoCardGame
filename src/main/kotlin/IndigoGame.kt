@@ -55,7 +55,7 @@ class IndigoGame {
     }
 
     private fun nextPlay() {
-        val cardPlayed = currentPlayer.playCard()
+        val cardPlayed = currentPlayer.findCardToPlay(table.cards.lastOrNull())
         if (cardPlayed == null) {
             quitGame = true
             return
@@ -116,5 +116,4 @@ class IndigoGame {
             aiPlayer
         else hmPlayer
     }
-
 }
